@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Digital Rain Screensaver</title>
+    <style>
+        /* Verhindert Scrollbars und sorgt für einen echten Vollbildmodus */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: monospace;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Kurzer Hinweis-Text oben links */
+        .info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: rgba(0, 255, 70, 0.3);
+            font-size: 12px;
+            pointer-events: none;
+            user-select: none;
+            transition: opacity 0.5s ease;
+        }
+        
+        body:hover .info {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="info">F11 für Vollbild drücken</div>
+    <canvas id="matrixCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Anpassung der Canvas-Größe an das Browserfenster
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initializeRain();
+        }
+
+        // Zeichen-Pool: Kombination aus Katakana (wie im Original-Film) und Zahlen
+        const matrixChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ".split("");
+
+        const fontSize = 16;
+        let columns;
+        let drops;
+
+        // Initialisiert oder setzt die Startpositionen der Regenströme zurück
+        function initializeRain() {
+            columns = Math.floor(canvas.width / fontSize);
+            drops = [];
+            for (let x = 0; x < columns; x++) {
+                // Zufällige y-Startposition weit über dem oberen Bildschirmrand
+                drops[x] = Math.random() * -100; 
+            }
+        }
+
+        // Die Haupt-Animationsschleife
+        function drawMatrix() {
+            // Ein leicht transparenter schwarzer Hintergrund erzeugt den Leuchteffekt/Schweif der Zeichen
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Schriftart konfigurieren
+            ctx.font = fontSize + 'px monospace';
+
+            // Jeden Datenstrom einzeln berechnen und zeichnen
+            for (let i = 0; i < drops.length; i++) {
+                // Zufälliges Zeichen auswählen
+                const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                
+                // X- und Y-Koordinaten berechnen
+                const x = i * fontSize;
+                const y = drops[i] * fontSize;
+
+                // Das allererste Zeichen am Kopf des Stroms leuchtet weiß
+                if (Math.random() > 0.98) {
+                    ctx.fillStyle = '#fff';
+                } else {
+                    // Der typische grüne Matrix-Farbton
+                    ctx.fillStyle = '#0f0';
+                }
+
+                ctx.fillText(text, x, y);
+
+                // Wenn der Strom den unteren Bildschirmrand erreicht hat,
+                // setzen wir ihn mit einer zufälligen Verzögerung wieder nach oben zurück
+                if (y > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+
+                // Den Strom ein Stück nach unten bewegen
+                drops[i]++;
+            }
+        }
+
+        // Event-Listener für Größenänderung des Fensters
+        window.addEventListener('resize', resizeCanvas);
+
+        // Initialer Start des Codes
+        resizeCanvas();
+        
+        // Die Animation wird mit ca. 30 fps ausgeführt (alle 33 Millisekunden ein Frame)
+        setInterval(drawMatrix, 33);
+    </script>
+</body>
+</html>
