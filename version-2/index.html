@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Matrix Digital Rain</title>
+    <style>
+        /* Modernes, cleanes CSS für maximalen Fokus auf die Grafik */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #030708; /* Edles Tiefschwarz */
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Minimalistischer, moderner UI-Hinweis */
+        .ui-overlay {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            color: #00ff66;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.4;
+            pointer-events: none;
+            user-select: none;
+            border-left: 2px solid #00ff66;
+            padding-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ui-overlay">System: Active // Press F11</div>
+    <canvas id="matrixCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Zeichenauswahl: Originalgetreue Katakana & Code-Symbole
+        const chars = "ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ10X+*<>[]";
+        
+        let streams = [];
+        const baseFontSize = 14;
+
+        // Klasse zur Erzeugung individueller Datenströme (für Tiefenwirkung)
+        class Stream {
+            constructor(x) {
+                this.x = x;
+                this.reset();
+                // Zufällige Startposition auf der Y-Achse, damit es sofort regnet
+                this.y = Math.random() * -canvas.height; 
+            }
+
+            reset() {
+                // Bestimmt die Tiefenebene (Z-Achse) des Stroms
+                this.zDepth = Math.random(); // 0 (weit hinten) bis 1 (ganz vorne)
+                
+                // Skalierung von Größe, Geschwindigkeit und Opazität basierend auf der Tiefe
+                this.fontSize = baseFontSize * (0.5 + this.zDepth * 0.8);
+                this.speed = (2 + this.zDepth * 5); 
+                this.opacity = 0.2 + this.zDepth * 0.8;
+                
+                this.y = -this.fontSize * 5;
+            }
+
+            update() {
+                this.y += this.speed;
+                if (this.y > canvas.height && Math.random() > 0.98) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.font = `bold ${this.fontSize}px 'Courier New', monospace`;
+                
+                // Zufälliges Zeichen für diesen Frame generieren
+                const char = chars[Math.floor(Math.random() * chars.length)];
+                
+                // 1. Der glühende Kopf des Stroms (Immer strahlend Weiß)
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                
+                // Neon-Glow hinzufügen (wird nur bei den vorderen Strömen aktiv, um Performance zu sparen)
+                if (this.zDepth > 0.7) {
+                    ctx.shadowColor = '#00ff66';
+                    ctx.shadowBlur = 8;
+                } else {
+                    ctx.shadowBlur = 0;
+                }
+                
+                ctx.fillText(char, this.x, this.y);
+                
+                // Schatten für nachfolgende Zeichen sofort wieder ausschalten
+                ctx.shadowBlur = 0;
+
+                // 2. Der restliche grüne Schweif (Etwas dunkler und transparenter)
+                ctx.fillStyle = `rgba(0, 255, 102, ${this.opacity * 0.6})`;
+                ctx.fillText(char, this.x, this.y - this.fontSize);
+            }
+        }
+
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            streams = [];
+            // Anzahl der Spalten basierend auf der Bildschirmbreite berechnen
+            const columns = Math.floor(canvas.width / (baseFontSize * 0.8));
+            
+            for (let i = 0; i < columns; i++) {
+                streams.push(new Stream(i * baseFontSize * 0.8));
+            }
+        }
+
+        function animate() {
+            // Perfekt ausbalancierter Motion-Blur durch minimal transparentes Schwarz
+            ctx.fillStyle = 'rgba(3, 7, 8, 0.08)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Alle Ströme aktualisieren und zeichnen
+            streams.forEach(stream => {
+                stream.update();
+                stream.draw();
+            });
+
+            // Erzwingt flüssige 60 Frames pro Sekunde, synchronisiert mit der Hardware
+            requestAnimationFrame(animate);
+        }
+
+        // Event-Listener für das Ändern der Fenstergröße
+        window.addEventListener('resize', () => {
+            init();
+        });
+
+        // Start
+        init();
+        animate();
+    </script>
+</body>
+</html>
